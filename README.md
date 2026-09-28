@@ -4,9 +4,9 @@
 
 ## What it is (in simple terms)
 
-Most people open ChatGPT, type one vague sentence, and get a mediocre result. This app fixes that. You fill in a short form — what you're writing, who it's for, what tone, and the key facts — and it instantly builds a professional, structured prompt you can paste into any AI tool.
+Most people open ChatGPT, type one vague sentence, and get a mediocre result. This app fixes that. You fill in a short form what you're writing, who it's for, what tone, and the key facts and it instantly builds a professional, structured prompt you can paste into any AI tool.
 
-The point: instead of hoping the AI understands you, you give it a clear brief — the same way you'd brief a person. Better brief, better output, every time.
+The point: instead of hoping the AI understands you, you give it a clear brief the same way you'd brief a person. Better brief, better output, every time.
 
 One-liner version: **it turns your rough idea into the perfect instructions for an AI, so the AI writes what you actually wanted.**
 
@@ -45,7 +45,7 @@ cd ai-content-generator
 
 ## Author
 
-**Freddy Thosago** — ERP, BI & AI solutions developer, Johannesburg, South Africa
+**Freddy Thosago** — Full Stack & AI solutions developer, Johannesburg, South Africa
 
 - Portfolio: https://tshepisofrominnostation.github.io/portfolio/
 - GitHub: https://github.com/tshepisofrominnostation
