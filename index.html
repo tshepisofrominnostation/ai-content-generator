@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Content Generator &amp; Structured Prompt Builder</title>
+<meta name="description" content="Build optimized, structured prompts for any LLM and generate B2B content — cold emails, blog outlines, LinkedIn posts, tech summaries and status updates.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: {
+        sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace']
+      },
+      colors: {
+        ink: '#0a1628', panel: '#0f2038', line: '#22395c', cy: '#22d3ee', or: '#fb923c'
+      }
+    }
+  }
+}
+</script>
+<style>
+  :root { --cy:#22d3ee; --or:#fb923c; --line:#22395c; }
+  body { background:#0a1628; }
+  html { scroll-padding-top: 4.5rem; }
+  @media (prefers-reduced-motion: no-preference) { html { scroll-behavior:smooth } }
+  ::selection { background:rgba(34,211,238,.35) }
+  :focus-visible { outline:2px solid var(--cy); outline-offset:3px; border-radius:6px }
+  .card { background:#0f2038; border:1px solid #22395c; border-radius:14px }
+  .glass { background:rgba(15,32,56,.85); backdrop-filter:blur(10px) }
+  .btn { display:inline-flex; align-items:center; gap:.45rem; padding:.6rem 1.05rem; border-radius:10px;
+         font-weight:600; font-size:.9rem; cursor:pointer; border:1px solid var(--cy); color:var(--cy);
+         background:transparent; transition:background .15s, color .15s, border-color .15s; font-family:inherit }
+  .btn:hover { background:rgba(34,211,238,.12) }
+  .btn.pri { background:var(--cy); color:#04202a; border-color:var(--cy) }
+  .btn.pri:hover { background:#67e8f9 }
+  .btn.or { border-color:var(--or); color:var(--or) }
+  .btn.or:hover { background:rgba(251,146,60,.12) }
+  .btn.ghost { border-color:var(--line); color:#a3b4cc }
+  .btn.ghost:hover { background:rgba(163,180,204,.08) }
+  .btn:disabled { opacity:.5; cursor:not-allowed }
+  label.fl { display:block; font-size:.78rem; font-weight:600; letter-spacing:.04em; text-transform:uppercase;
+             color:#a3b4cc; margin-bottom:.4rem }
+  .inp { width:100%; background:#081222; border:1px solid #22395c; border-radius:10px;
+         color:#e6edf7; padding:.65rem .8rem; font-size:.93rem; font-family:inherit }
+  .inp:focus { border-color:var(--cy); outline:none; box-shadow:0 0 0 3px rgba(34,211,238,.15) }
+  [role=tab] { background:none; border:0; border-bottom:2px solid transparent; color:#a3b4cc; padding:.6rem .9rem;
+               cursor:pointer; font:inherit; font-weight:600; font-size:.92rem }
+  [role=tab][aria-selected=true] { color:var(--cy); border-color:var(--cy) }
+  pre.pbox { white-space:pre-wrap; word-break:break-word; margin:0; background:#081222; border:1px solid #22395c;
+             border-radius:10px; padding:1rem; font-size:.85rem; line-height:1.6; font-family:'JetBrains Mono',monospace; color:#d7e3f4 }
+  .badge { font-family:'JetBrains Mono',monospace; font-size:.72rem; border:1px solid #22395c; border-radius:6px;
+           padding:.12rem .5rem; color:#a3b4cc }
+  .toast { position:fixed; left:50%; bottom:1.5rem; transform:translateX(-50%) translateY(20px); opacity:0;
+           pointer-events:none; transition:opacity .25s, transform .25s; z-index:50;
+           background:#0f2038; border:1px solid var(--or); color:var(--or); font-weight:600; font-size:.9rem;
+           padding:.6rem 1.2rem; border-radius:10px }
+  .toast.show { opacity:1; transform:translateX(-50%) translateY(0) }
+  .acc-panel { max-height:0; overflow:hidden; transition:max-height .3s ease }
+  .chev { transition:transform .25s }
+  .chev.open { transform:rotate(180deg) }
+</style>
+</head>
+<body class="font-sans text-[#e6edf7] leading-relaxed">
+<a href="#main" class="btn pri" style="position:absolute;left:-999px" onfocus="this.style.left='1rem';this.style.top='1rem'" onblur="this.style.left='-999px'">Skip to content</a>
+
+<header class="sticky top-0 z-30 glass border-b border-line">
+  <nav class="max-w-7xl mx-auto px-5 min-h-[3.5rem] flex items-center justify-between" aria-label="Main">
+    <a href="#top" class="font-mono font-bold no-underline text-[#e6edf7]">prompt<span class="text-cy">.builder</span></a>
+    <div class="flex items-center gap-2">
+      <span class="badge hidden sm:inline">Single-file · Vanilla JS</span>
+      <a class="btn ghost" href="https://tshepisofrominnostation.github.io/portfolio/" target="_blank" rel="noopener">Portfolio</a>
+    </div>
+  </nav>
+</header>
+
+<main id="main">
+<section id="top" class="max-w-7xl mx-auto px-5 pt-12 pb-4">
+  <h1 class="text-3xl md:text-[2.6rem] font-extrabold tracking-tight leading-tight max-w-3xl">AI Content Generator &amp; <span class="text-cy">Structured Prompt Builder</span></h1>
+  <p class="text-[#a3b4cc] mt-3 max-w-2xl text-[1.02rem]">Turn rough ideas into optimized, structured prompts ready for any LLM — then generate content through an API or a simulated preview, all in your browser.</p>
+</section>
+
+<section class="max-w-7xl mx-auto px-5 pb-6" aria-label="Application">
+  <div class="grid lg:grid-cols-2 gap-6">
+
+    <!-- ================= LEFT: FORM ================= -->
+    <form id="builder" class="card p-6" aria-labelledby="f-h" novalidate>
+      <h2 id="f-h" class="text-xl font-bold mb-1">1 · Build your prompt</h2>
+      <p class="text-[#a3b4cc] text-sm mb-5">Fill in the brief — the master prompt updates live on the right.</p>
+
+      <div class="mb-4">
+        <label class="fl" for="ctype">Content type</label>
+        <select id="ctype" class="inp" aria-describedby="ctype-hint">
+          <option value="Cold Sales Email">Cold Sales Email</option>
+          <option value="Blog Post Outline">Blog Post Outline</option>
+          <option value="LinkedIn Post">LinkedIn Post</option>
+          <option value="Technical Project Summary">Technical Project Summary</option>
+          <option value="Executive Status Update">Executive Status Update</option>
+        </select>
+        <p id="ctype-hint" class="text-[#a3b4cc] text-xs mt-1.5">Drives the output format the prompt requests.</p>
+      </div>
+
+      <div class="mb-4">
+        <label class="fl" for="aud">Target audience</label>
+        <input id="aud" class="inp" type="text" placeholder="e.g. Hiring Manager, B2B Client, Engineering Team" autocomplete="off">
+      </div>
+
+      <div class="mb-4">
+        <label class="fl" for="tone">Tone / style</label>
+        <select id="tone" class="inp">
+          <option>Professional &amp; Concise</option>
+          <option>Persuasive</option>
+          <option>Technical &amp; Detailed</option>
+          <option>Casual &amp; Engaging</option>
+        </select>
+      </div>
+
+      <div class="mb-4">
+        <label class="fl" for="points">Core key points / context</label>
+        <textarea id="points" class="inp" rows="5" placeholder="Main ideas or facts to include — one per line works best."></textarea>
+      </div>
+
+      <div class="mb-6">
+        <label class="fl" for="rules">Output constraints / rules</label>
+        <textarea id="rules" class="inp" rows="3" placeholder="Word count limits, formatting preferences, boundaries… e.g. Under 150 words. No false urgency."></textarea>
+      </div>
+
+      <div class="flex flex-wrap gap-3">
+        <button type="button" class="btn or" id="load-sample">⚡ Load Sample Data</button>
+        <button type="button" class="btn ghost" id="reset">Reset Form</button>
+      </div>
+    </form>
+
+    <!-- ================= RIGHT: OUTPUT ================= -->
+    <div class="card p-6 flex flex-col" aria-labelledby="o-h">
+      <div class="flex items-center justify-between flex-wrap gap-2 mb-1">
+        <h2 id="o-h" class="text-xl font-bold">2 · Live output</h2>
+        <span class="badge" id="prompt-meta">0 points · live</span>
+      </div>
+
+      <div role="tablist" aria-label="Output mode" class="flex border-b border-line -mx-2 px-2">
+        <button role="tab" id="tab-prompt" aria-selected="true" aria-controls="panel-prompt">Optimized Master Prompt</button>
+        <button role="tab" id="tab-api" aria-selected="false" aria-controls="panel-api" tabindex="-1">API Generator Mode</button>
+      </div>
+
+      <!-- Tab 1: Master prompt -->
+      <div role="tabpanel" id="panel-prompt" aria-labelledby="tab-prompt" class="pt-4 flex-1 flex flex-col">
+        <pre class="pbox flex-1" id="prompt-out" aria-label="Optimized master prompt"></pre>
+        <div class="flex flex-wrap gap-3 mt-4">
+          <button type="button" class="btn pri" id="copy-prompt">📋 Copy Structured Prompt</button>
+          <button type="button" class="btn" id="gen-sample">▶ Generate Sample Content</button>
+        </div>
+      </div>
+
+      <!-- Tab 2: API mode -->
+      <div role="tabpanel" id="panel-api" aria-labelledby="tab-api" class="pt-4 flex-1 flex-col hidden">
+        <p class="text-[#a3b4cc] text-sm mb-3">Optional: paste an API key to generate with a real model. The key stays in your browser and is sent only to the provider you choose. No key? The generator falls back to a simulated preview.</p>
+        <div class="grid sm:grid-cols-2 gap-3 mb-3">
+          <div>
+            <label class="fl" for="provider">Provider</label>
+            <select id="provider" class="inp">
+              <option value="openai">OpenAI (gpt-4o-mini)</option>
+              <option value="groq">Groq (llama-3.3-70b)</option>
+              <option value="gemini">Google Gemini (2.0 flash)</option>
+            </select>
+          </div>
+          <div>
+            <label class="fl" for="apikey">API key (optional)</label>
+            <input id="apikey" class="inp" type="password" placeholder="sk-… / gsk_… / AIza…" autocomplete="off">
+          </div>
+        </div>
+        <div class="flex flex-wrap items-center gap-3 mb-3">
+          <button type="button" class="btn pri" id="api-generate">▶ Generate Content</button>
+          <span id="api-status" class="text-sm text-[#a3b4cc]" role="status" aria-live="polite"></span>
+        </div>
+        <div id="api-out-wrap" class="flex-1 hidden">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="badge" id="api-badge">generated</span>
+            <button type="button" class="btn ghost !py-1 !px-2 text-xs" id="copy-api">Copy output</button>
+          </div>
+          <pre class="pbox" id="api-out" style="max-height:26rem; overflow:auto"></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= PROMPT LIBRARY ================= -->
+<section class="max-w-7xl mx-auto px-5 pb-16" aria-labelledby="lib-h">
+  <h2 id="lib-h" class="text-xl font-bold mb-3">3 · Prompt library</h2>
+  <p class="text-[#a3b4cc] text-sm mb-4">Pre-built system prompt templates — expand one, tweak the bracketed fields, copy and go.</p>
+  <div id="library" class="space-y-3"></div>
+</section>
+</main>
+
+<footer class="border-t border-line py-8 text-center text-[#a3b4cc] text-sm">
+  Built by <a class="text-cy hover:underline" href="https://github.com/tshepisofrominnostation" target="_blank" rel="noopener">Freddy Thosago</a> · single file, zero dependencies · Johannesburg, South Africa
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite">Copied!</div>
+
+<script>
+(function () {
+  "use strict";
+  var $ = function (id) { return document.getElementById(id); };
+  var f = $("builder");
+
+  /* ---------- helpers ---------- */
+  function lines(s) {
+    return s.split("\n").map(function (x) { return x.trim(); }).filter(Boolean);
+  }
+  function esc(s) {
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+  var toastTimer = null;
+  function toast(msg) {
+    var t = $("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.classList.remove("show"); }, 1800);
+  }
+  function copyText(text, msg) {
+    var done = function () { toast(msg || "Copied!"); };
+    var fallback = function () {
+      var ta = document.createElement("textarea");
+      ta.value = text; ta.style.position = "fixed"; ta.style.left = "-9999px";
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); done(); } catch (e) { toast("Press Ctrl+C to copy"); }
+      document.body.removeChild(ta);
+    };
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(done, fallback);
+    } else { fallback(); }
+  }
+
+  /* ---------- tabs ---------- */
+  function switchTab(tab) {
+    var isPrompt = tab === "tab-prompt";
+    $("tab-prompt").setAttribute("aria-selected", String(isPrompt));
+    $("tab-api").setAttribute("aria-selected", String(!isPrompt));
+    $("tab-prompt").tabIndex = isPrompt ? 0 : -1;
+    $("tab-api").tabIndex = isPrompt ? -1 : 0;
+    $("panel-prompt").classList.toggle("hidden", !isPrompt);
+    $("panel-prompt").classList.toggle("flex", isPrompt);
+    $("panel-api").classList.toggle("hidden", isPrompt);
+    $("panel-api").classList.toggle("flex", !isPrompt);
+  }
+  $("tab-prompt").addEventListener("click", function () { switchTab("tab-prompt"); });
+  $("tab-api").addEventListener("click", function () { switchTab("tab-api"); });
+
+  /* ---------- master prompt engine ---------- */
+  var FORMATS = {
+    "Cold Sales Email": "A complete email with a subject line, greeting, body and sign-off. The subject line must be specific and under 10 words.",
+    "Blog Post Outline": "A title plus H2 sections with 3-4 bullet points each, and a suggested word count per section.",
+    "LinkedIn Post": "A single post under 1300 characters with short paragraphs, white space, a clear hook in the first line, and at most 3 hashtags at the end.",
+    "Technical Project Summary": "A summary with an overview paragraph, a 'Built with' list, a 'Key deliverables' bullet list and a one-line outcome statement.",
+    "Executive Status Update": "A status update with 'Progress', 'Risks' and 'Asks' sections, each as short bullets. Lead with the headline status."
+  };
+  function buildPrompt() {
+    var ctype = $("ctype").value;
+    var aud = $("aud").value.trim() || "the target reader";
+    var tone = $("tone").value;
+    var pts = lines($("points").value);
+    var rules = lines($("rules").value);
+
+    var p = "# ROLE\nYou are an expert content strategist specialising in " + ctype +
+      " writing for B2B and technical audiences.\n\n# TASK\nWrite a " + ctype + " aimed at: " + aud + "." +
+      "\nTone / style: " + tone + ".\n";
+
+    if (pts.length) {
+      p += "\n# KEY POINTS TO INCLUDE\n";
+      pts.forEach(function (pt) { p += "- " + pt + "\n"; });
+    } else {
+      p += "\n# KEY POINTS TO INCLUDE\n- (Add key points in the form; every fact must come from the client brief.)\n";
+    }
+
+    p += "\n# CONSTRAINTS\n";
+    if (rules.length) {
+      rules.forEach(function (r) { p += "- " + r + "\n"; });
+    } else {
+      p += "- (Add word limits or boundaries in the form.)\n";
+    }
+
+    p += "\n# OUTPUT FORMAT\n- " + FORMATS[ctype] +
+      "\n- Return only the final content, ready to use — no preamble, no explanation of your process." +
+      "\n- Do not invent metrics, statistics, names or features that are not in the key points." +
+      "\n- If a key point is contradictory or unclear, make the most reasonable professional choice and keep going.\n";
+    return p;
+  }
+  function render() {
+    var pts = lines($("points").value).length;
+    $("prompt-out").textContent = buildPrompt();
+    $("prompt-meta").textContent = pts + (pts === 1 ? " point" : " points") + " · live";
+  }
+  f.addEventListener("input", render);
+  f.addEventListener("change", render);
+
+  /* ---------- sample data ---------- */
+  var SAMPLES = {
+    "Cold Sales Email": {
+      aud: "Procurement lead at a mid-size logistics company",
+      tone: "Persuasive",
+      points: "Rem0Beg Pay gives employees early access to 25% of earned wages\nFlat R15 fee per advance — no interest, no loan shark risk\nIntegrates with Sage, PaySpace and Pastel payroll\nPilots reduced payday-loan dependence and absenteeism",
+      rules: "Under 150 words\nOne clear call to action: a 15-minute call\nNo false urgency or inflated numbers"
+    },
+    "Blog Post Outline": {
+      aud: "HR directors at South African corporates",
+      tone: "Professional & Concise",
+      points: "Earned wage access explained in plain language\nWhy a flat-fee model avoids National Credit Act classification\nPOPIA compliance through per-tenant data isolation",
+      rules: "800-1200 word article\nH2 sections only\nOne supporting stat per section\nNo jargon"
+    },
+    "LinkedIn Post": {
+      aud: "Tech recruiters and engineering managers",
+      tone: "Casual & Engaging",
+      points: "Built MedRoute, an AI triage chatbot, in a 4-week bootcamp\nLearned structured prompt engineering the hard way\nSharing a before/after prompt optimisation case study",
+      rules: "Under 1300 characters\nShort paragraphs with white space\nAt most 3 hashtags\nEnd with a question"
+    },
+    "Technical Project Summary": {
+      aud: "Engineering team reviewing my portfolio",
+      tone: "Technical & Detailed",
+      points: "Single-page vanilla JS app — zero framework dependencies\nLive structured prompt builder with copy-to-clipboard\nAPI mode supports OpenAI, Groq and Gemini with a simulated fallback",
+      rules: "Under 250 words\nInclude architecture notes\nUse bullet points for the stack"
+    },
+    "Executive Status Update": {
+      aud: "C-suite stakeholders of the pilot programme",
+      tone: "Professional & Concise",
+      points: "Phase 1 complete: platform deployed and live\nIntegration testing with three payroll providers finished\nNext milestone: pilot with first corporate client",
+      rules: "Max 150 words\nInclude Risks and Asks sections\nLead with the headline status"
+    }
+  };
+  $("load-sample").addEventListener("click", function () {
+    var s = SAMPLES[$("ctype").value];
+    $("aud").value = s.aud;
+    $("tone").value = s.tone;
+    $("points").value = s.points;
+    $("rules").value = s.rules;
+    render();
+    toast("Sample data loaded");
+  });
+
+  /* ---------- reset ---------- */
+  $("reset").addEventListener("click", function () {
+    $("aud").value = "";
+    $("tone").selectedIndex = 0;
+    $("points").value = "";
+    $("rules").value = "";
+    $("apikey").value = "";
+    $("api-out-wrap").classList.add("hidden");
+    $("api-status").textContent = "";
+    render();
+    toast("Form reset");
+  });
+
+  /* ---------- copy prompt ---------- */
+  $("copy-prompt").addEventListener("click", function () {
+    copyText(buildPrompt(), "Copied!");
+  });
+
+  /* ---------- simulated generation ---------- */
+  function simulate() {
+    var ctype = $("ctype").value;
+    var pts = lines($("points").value);
+    var bullets = pts.map(function (p) { return "- " + p; }).join("\n") || "- (no key points provided)";
+    var sign = "\n\nBest regards,\nFreddy Thosago\nRem0Beg Solutions";
+    var t = {
+      "Cold Sales Email":
+        "Subject: Early wage access for your team — flat R15, no interest\n\nHi there,\n\nYour team works hard all month, yet many employees fight cash-flow gaps with expensive payday loans. We built a way to change that.\n\nHere is what it means for you:\n" + bullets +
+        "\n\nIf it is worth 15 minutes, I will show you how the first pilot went and what a rollout would look like for your payroll." + sign,
+      "Blog Post Outline":
+        "TITLE: Earned Wage Access: What South African HR Leaders Need to Know\n\nIntro (~100 words): Why payday stress lands on HR's desk.\n\n## H2: What earned wage access actually is (~250 words)\n- Earned, not borrowed: how access to wages already worked for works\n- The mechanics in one paragraph\n\n## H2: Why a flat fee keeps you clear of the NCA (~250 words)\n- Flat-fee vs credit models\n- What that means for compliance\n\n## H2: POPIA and data isolation (~250 words)\n- Per-tenant separation in practice\n\n## Conclusion + CTA (~100 words)",
+      "LinkedIn Post":
+        "4 weeks. One AI triage chatbot. Zero frameworks. 🚀\n\nLast month I built MedRoute — a guided chatbot that matches patients to the right specialist and books them nearby.\n\nThe real lesson was prompt engineering:\n" + bullets +
+        "\n\nThe difference between a vague prompt and a structured one is the difference between a demo and a product.\n\nWhat is the one prompt that changed how you build? 👇\n\n#AI #PromptEngineering #BuildInPublic",
+      "Technical Project Summary":
+        "OVERVIEW\nA single-page web application that converts a rough content brief into an optimized, structured LLM prompt, then generates content client-side.\n\nBUILT WITH\n- HTML5 + Tailwind (CDN) + vanilla JavaScript\n- Live two-way binding between form and prompt engine\n- Clipboard API with graceful fallback\n\nKEY DELIVERABLES\n" + bullets +
+        "\n\nOUTCOME\nA zero-dependency tool that demonstrates practical prompt engineering: role, task, constraints and output format defined explicitly before generation.",
+      "Executive Status Update":
+        "STATUS: On track — Phase 1 complete and deployed.\n\nPROGRESS\n" + bullets +
+        "\n\nRISKS\n- Onboarding time for the first corporate client is the main unknown.\n\nASKS\n- Confirm pilot start date this week.\n- Assign a payroll integration contact for the first rollout."
+    };
+    return t[ctype];
+  }
+  $("gen-sample").addEventListener("click", function () {
+    switchTab("tab-api");
+    $("api-badge").textContent = "simulated preview";
+    $("api-out").textContent = simulate();
+    $("api-out-wrap").classList.remove("hidden");
+    $("api-status").textContent = "";
+    toast("Sample content generated");
+  });
+
+  /* ---------- API generation ---------- */
+  var PROVIDERS = {
+    openai: {
+      url: "https://api.openai.com/v1/chat/completions",
+      model: "gpt-4o-mini",
+      build: function (key, prompt) {
+        return {
+          headers: { "Content-Type": "application/json", "Authorization": "Bearer " + key },
+          body: JSON.stringify({ model: "gpt-4o-mini", messages: [
+            { role: "system", content: prompt },
+            { role: "user", content: "Generate the content now, following the prompt exactly." }
+          ], temperature: 0.7 })
+        };
+      },
+      parse: function (d) { return d.choices[0].message.content; }
+    },
+    groq: {
+      url: "https://api.groq.com/openai/v1/chat/completions",
+      model: "llama-3.3-70b-versatile",
+      build: function (key, prompt) {
+        return {
+          headers: { "Content-Type": "application/json", "Authorization": "Bearer " + key },
+          body: JSON.stringify({ model: "llama-3.3-70b-versatile", messages: [
+            { role: "system", content: prompt },
+            { role: "user", content: "Generate the content now, following the prompt exactly." }
+          ], temperature: 0.7 })
+        };
+      },
+      parse: function (d) { return d.choices[0].message.content; }
+    },
+    gemini: {
+      url: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
+      model: "gemini-2.0-flash",
+      build: function (key, prompt) {
+        return {
+          headers: { "Content-Type": "application/json", "x-goog-api-key": key },
+          body: JSON.stringify({ contents: [{ parts: [{ text: prompt + "\n\nGenerate the content now, following the prompt exactly." }] }] })
+        };
+      },
+      parse: function (d) { return d.candidates[0].content.parts[0].text; }
+    }
+  };
+  $("api-generate").addEventListener("click", function () {
+    var btn = $("api-generate");
+    var key = $("apikey").value.trim();
+    var status = $("api-status");
+    var prompt = buildPrompt();
+
+    function show(text, badge) {
+      $("api-badge").textContent = badge;
+      $("api-out").textContent = text;
+      $("api-out-wrap").classList.remove("hidden");
+    }
+
+    if (!key) {
+      status.textContent = "No API key — showing simulated preview.";
+      show(simulate(), "simulated preview");
+      return;
+    }
+    var prov = PROVIDERS[$("provider").value];
+    var req = prov.build(key, prompt);
+    btn.disabled = true;
+    status.textContent = "Generating with " + prov.model + "…";
+    fetch(prov.url, { method: "POST", headers: req.headers, body: req.body })
+      .then(function (r) {
+        if (!r.ok) throw new Error("HTTP " + r.status + (r.status === 401 ? " — check your API key" : ""));
+        return r.json();
+      })
+      .then(function (d) {
+        show(prov.parse(d), prov.model);
+        status.textContent = "Done.";
+        toast("Content generated");
+      })
+      .catch(function (err) {
+        status.textContent = "API call failed (" + err.message + "). Showing simulated preview instead.";
+        show(simulate(), "simulated preview (API failed)");
+      })
+      .finally(function () { btn.disabled = false; });
+  });
+  $("copy-api").addEventListener("click", function () {
+    copyText($("api-out").textContent, "Copied!");
+  });
+
+  /* ---------- prompt library ---------- */
+  var LIB = [
+    ["Cold email system prompt", "You are a B2B outbound specialist writing a cold sales email.\nAudience: [WHO EXACTLY READS THIS — role, industry, pain]\nProduct: [WHAT YOU SELL IN ONE SENTENCE]\nMust include: [2-3 PROOF POINTS]\nConstraints: under [N] words, one CTA ([EXACT ASK]), no false urgency, no invented metrics.\nOutput: subject line (under 10 words) then the email body only."],
+    ["Blog outline system prompt", "You are a content strategist. Create an outline for a blog article.\nWorking title: [TITLE]\nAudience: [READER]\nSearch intent: [INFORMATIONAL / COMMERCIAL]\nMust cover: [KEY SECTIONS]\nConstraints: [N] words total, H2 sections only, one stat per section, plain language.\nOutput: title, then H2 headings with 3-4 bullets and a word budget each."],
+    ["Tech summary system prompt", "You are a senior engineer writing for a technical audience.\nProject: [ONE-LINE DESCRIPTION]\nStack: [LANGUAGES, FRAMEWORKS, INFRASTRUCTURE]\nHighlight: [WHAT IS NON-OBVIOUS OR CLEVER]\nConstraints: under [N] words, bullet lists for stack and deliverables, no marketing language.\nOutput: overview paragraph, 'Built with' list, 'Key deliverables' list, one-line outcome."]
+  ];
+  var lib = $("library");
+  LIB.forEach(function (item, i) {
+    var wrap = document.createElement("div");
+    wrap.className = "card overflow-hidden";
+    wrap.innerHTML =
+      '<button type="button" class="w-full flex items-center justify-between gap-4 p-4 text-left font-semibold" ' +
+      'id="lib-t' + i + '" aria-expanded="false" aria-controls="lib-p' + i + '">' +
+      '<span class="flex items-center gap-2"><span class="text-or font-mono text-xs">0' + (i + 1) + '</span>' + item[0] + '</span>' +
+      '<svg class="chev shrink-0" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>' +
+      '</button>' +
+      '<div class="acc-panel" id="lib-p' + i + '" role="region" aria-labelledby="lib-t' + i + '">' +
+      '<div class="px-4 pb-4"><pre class="pbox">' + esc(item[1]) + '</pre>' +
+      '<button type="button" class="btn sm mt-3 cp-lib" data-i="' + i + '">📋 Copy template</button></div></div>';
+    lib.appendChild(wrap);
+  });
+  lib.addEventListener("click", function (e) {
+    var head = e.target.closest("button[id^='lib-t']");
+    if (head) {
+      var panel = document.getElementById(head.getAttribute("aria-controls"));
+      var open = head.getAttribute("aria-expanded") === "true";
+      head.setAttribute("aria-expanded", String(!open));
+      panel.style.maxHeight = open ? "0px" : panel.scrollHeight + "px";
+      head.querySelector(".chev").classList.toggle("open", !open);
+      return;
+    }
+    var cp = e.target.closest(".cp-lib");
+    if (cp) copyText(LIB[cp.dataset.i][1], "Template copied!");
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
